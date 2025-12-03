@@ -1,0 +1,67 @@
+name: AWS ECR CI/CD for Music Bot
+
+on:
+  push:
+    branches:
+      - main 
+
+env:
+  AWS_REGION: eu-west-1 # החלף לאזור ה-AWS שלך
+  ECR_REGISTRY: ${{ secrets.ECR_REGISTRY }}
+  ECR_REPOSITORY: ${{ secrets.ECR_REPOSITORY }}
+  IMAGE_TAG: ${{ github.sha }}
+
+jobs:
+  build_and_push_to_ecr:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build, tag, and push image to Amazon ECR
+        id: build-image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}:${{ env.IMAGE_TAG }}, ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}:latest
+          cache-from: type=gha
+
+      # --- שלב CD: פריסה לשרת EC2 והרצה מחדש ---
+      - name: Deploy to EC2 via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_KEY }}
+          script_stop: true
+          script: |
+            echo "--- PULLING AND DEPLOYING IMAGE ---"
+            # קבלת טוקן התחברות ל-ECR בתוך שרת EC2
+            aws ecr get-login-password --region ${{ env.AWS_REGION }} | docker login --username AWS --password-stdin ${{ env.ECR_REGISTRY }}
+            
+            # משיכת התמונה החדשה
+            docker pull ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}:latest
+            
+            # עצירה ומחיקה של הקונטיינר הישן
+            docker stop musicbot || true
+            docker rm musicbot || true
+            
+            # הרצת הבוט עם התמונה החדשה והגדרות יציבות (DNS, Token)
+            docker run -d \
+              --name musicbot \
+              -e DISCORD_BOT_TOKEN='${{ secrets.DISCORD_BOT_TOKEN }}' \
+              --dns 8.8.8.8 \
+              ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}:latest

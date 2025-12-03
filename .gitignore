@@ -11,6 +11,9 @@ terraform/
 .env.local
 .env.*.local
 
+# cookies
+cookies.txt
+
 # Python
 __pycache__/
 *.py[cod]

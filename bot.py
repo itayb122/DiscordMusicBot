@@ -26,6 +26,7 @@ YD_OPTS = {
     'default_search': 'auto',
     'source_address': '0.0.0.0',
     'ffmpeg_location': FFMPEG_EXE_PATH,
+    'cookiefile': '/app/cookies.txt',
     'extractor_args': {
         'youtube': {
             'player_client': ['android', 'web']
@@ -36,6 +37,7 @@ YD_OPTS = {
         'preferredcodec': 'opus',
     }]
 }
+
 
 # Global music queue for servers
 song_queues = collections.defaultdict(collections.deque)

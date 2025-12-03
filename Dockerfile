@@ -29,6 +29,7 @@ RUN pip install --upgrade pip && \
 
 # Copy bot code
 COPY bot.py /app/
+COPY cookies.txt /app/cookies.txt
 
 # Health check (optional but recommended)
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
