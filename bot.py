@@ -11,6 +11,7 @@ load_dotenv()
 BOT_TOKEN = os.getenv("DISCORD_BOT_TOKEN")
 
 # --- FFmpeg in Docker ---
+#FFMPEG_EXE_PATH = r"C:\Users\itayb\OneDrive\שולחן העבודה\ffmpeg-master-latest-win64-gpl-shared\ffmpeg-master-latest-win64-gpl-shared\bin\ffmpeg.exe"
 FFMPEG_EXE_PATH = "/usr/bin/ffmpeg" 
 
 intents = discord.Intents.default()
@@ -26,7 +27,7 @@ YD_OPTS = {
     'default_search': 'auto',
     'source_address': '0.0.0.0',
     'ffmpeg_location': FFMPEG_EXE_PATH,
-    'cookiefile': '/app/cookies.txt',
+    #'cookiefile': '/app/cookies.txt',
     'extractor_args': {
         'youtube': {
             'player_client': ['android', 'web']
@@ -37,7 +38,6 @@ YD_OPTS = {
         'preferredcodec': 'opus',
     }]
 }
-
 
 # Global music queue for servers
 song_queues = collections.defaultdict(collections.deque)
